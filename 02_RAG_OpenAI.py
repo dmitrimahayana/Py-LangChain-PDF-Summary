@@ -8,6 +8,8 @@ from langchain.vectorstores import Chroma
 from langchain import hub
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import StrOutputParser
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnablePassthrough
 from datetime import datetime
 
@@ -26,13 +28,15 @@ from datetime import datetime
 print("\nStart Loading =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 folder_path = './Test Input/'
 filename = 'journal_llama2.pdf'
+# filename = 'image-based-pdf-sample.pdf'
 loader = PyPDFLoader(folder_path + filename, extract_images=True)
 docs = loader.load()
 print("End Loading =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
 # Split text
 print("\nStart Splitting-Storing-Retriever =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+# text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
 splits = text_splitter.split_documents(docs)
 
 # Store split results
@@ -60,14 +64,116 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-rag_chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
+# Adding Memory
+condense_q_system_prompt = """Given a chat history and the latest user question \
+which might reference the chat history, formulate a standalone question \
+which can be understood without the chat history. Do NOT answer the question, \
+just reformulate it if needed and otherwise return it as is."""
+condense_q_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", condense_q_system_prompt),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{question}"),
+    ]
+)
+condense_q_chain = condense_q_prompt | llm | StrOutputParser()
+
+print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+message = condense_q_chain.invoke(
+    {
+        "chat_history": [
+            HumanMessage(content="Why do we need to eat?"),
+            AIMessage(content="to keep survive and life"),
+        ],
+        "question": "Why eating is important?",
+    }
+)
+print(message)
+print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+message = condense_q_chain.invoke(
+    {
+        "chat_history": [
+            HumanMessage(content="What does LLM stand for?"),
+            AIMessage(content="Large language model in machine learning world"),
+        ],
+        "question": "What does LLM mean?",
+    }
+)
+print(message)
+print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+message = condense_q_chain.invoke(
+    {
+        "chat_history": [
+            HumanMessage(content="Who is dmitri?"),
+            AIMessage(content="Dmitri is a data engineer with 4 years experience in building pipeline, ml, and dashboard"),
+        ],
+        "question": "Do you know dmitri?",
+    }
+)
+print(message)
+print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+qa_system_prompt = """You are an assistant for question-answering tasks. \
+Use the following pieces of retrieved context to answer the question. \
+If you don't know the answer, just say that you don't know. \
+Use three sentences maximum and keep the answer concise.\
+{context}"""
+qa_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", qa_system_prompt),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{question}"),
+    ]
 )
 
+
+def condense_question(input: dict):
+    if input.get("chat_history"):
+        return condense_q_chain
+    else:
+        return input["question"]
+
+
+rag_chain = (
+        RunnablePassthrough.assign(context=condense_question | retriever | format_docs)
+        | qa_prompt
+        | llm
+)
+chat_history = []
+
 print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-result = rag_chain.invoke("What is Toxicity?")
-print(result)
+question = "What does LLM stand for?"
+ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
+chat_history.extend([HumanMessage(content=question), ai_msg])
+print(f"{question}:", ai_msg.content)
 print("End Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+# question = "What is Bias?"
+# ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
+# chat_history.extend([HumanMessage(content=question), ai_msg])
+# print(f"{question}:", ai_msg.content)
+# print("End Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+#
+# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+# question = "What are common example of that issues?"
+# ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
+# chat_history.extend([HumanMessage(content=question), ai_msg])
+# print(f"{question}:", ai_msg.content)
+# print("End Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+# rag_chain = (
+#         {"context": retriever | format_docs, "question": RunnablePassthrough()}
+#         | prompt
+#         | llm
+#         | StrOutputParser()
+# )
+#
+# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+# result = rag_chain.invoke("What is Toxicity?")
+# print(result)
+# print("End Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
