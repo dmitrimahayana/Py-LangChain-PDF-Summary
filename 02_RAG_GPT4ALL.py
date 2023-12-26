@@ -84,7 +84,6 @@ message = condense_q_chain.invoke(
         "question": "Why eating is important?",
     }
 )
-print(message)
 print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
 print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
@@ -97,21 +96,6 @@ message = condense_q_chain.invoke(
         "question": "What does LLM mean?",
     }
 )
-print(message)
-print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-
-print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-message = condense_q_chain.invoke(
-    {
-        "chat_history": [
-            HumanMessage(content="Who is dmitri?"),
-            AIMessage(
-                content="Dmitri is a data engineer with 4 years experience in building pipeline, ml, and dashboard"),
-        ],
-        "question": "Do you know dmitri?",
-    }
-)
-print(message)
 print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
 qa_system_prompt = """You are an assistant for question-answering tasks. \
@@ -145,49 +129,23 @@ chat_history = []
 print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 question = "What does LLM stand for?"
 ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
-chat_history.extend([HumanMessage(content=question), ai_msg])
-print(f"{question}:", ai_msg.content)
+chat_history.extend([HumanMessage(content=question), AIMessage(content=ai_msg)])
 print("End Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
-# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-# question = "What is Toxicity?"
-# ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
-# chat_history.extend([HumanMessage(content=question), ai_msg])
-# print("\nEnd Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-#
-# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-# question = "What is Bias?"
-# ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
-# chat_history.extend([HumanMessage(content=question), ai_msg])
-# print("\nEnd Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-#
-# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-# second_question = "What are common example of that issues?"
-# rag_chain.invoke({"question": second_question, "chat_history": chat_history})
-# print("\nEnd Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+question = "What is Toxicity?"
+ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
+chat_history.extend([HumanMessage(content=question), AIMessage(content=ai_msg)])
+print("\nEnd Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
-# # RAG Prompt
-# prompt = hub.pull("rlm/rag-prompt")
-# prompt[0].prompt.template = """
-# You are a formal assistant for question-answering tasks.
-# Use the following pieces of retrieved context to answer the question.
-# If you don't know the answer, just say that you don't know.
-# Use three sentences maximum and keep the answer concise.
-# Question: {question}
-# Context: {context}
-# Answer:
-# """
-#
-# # Chaining
-# rag_chain = (
-#         {"context": retriever | format_docs, "question": RunnablePassthrough()}
-#         | prompt
-#         | llm
-#         | StrOutputParser()
-# )
-#
-# print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-# question = "What is Toxicity and Bias?"
-# result = rag_chain.invoke(question)
-# print(f"\n{question}: ", result)
-# print("End Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+question = "What is Bias?"
+ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
+chat_history.extend([HumanMessage(content=question), AIMessage(content=ai_msg)])
+print("\nEnd Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
+print("\nStart Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+question = "What are common example of that issues?"
+ai_msg = rag_chain.invoke({"question": question, "chat_history": chat_history})
+chat_history.extend([HumanMessage(content=question), AIMessage(content=ai_msg)])
+print("\nEnd Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
