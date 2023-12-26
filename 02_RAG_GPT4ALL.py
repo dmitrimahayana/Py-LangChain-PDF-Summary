@@ -22,8 +22,9 @@ from datetime import datetime
 # Load and Split
 print("\nStart Loading =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 folder_path = './Test Input/'
-filename = 'journal_llama2.pdf'
+# filename = 'journal_llama2.pdf'
 # filename = 'image-based-pdf-sample.pdf'
+filename = 'Test.pdf'
 loader = PyPDFLoader(folder_path + filename, extract_images=True)
 docs = loader.load()
 print("End Loading =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
@@ -84,7 +85,7 @@ message = condense_q_chain.invoke(
         "question": "Why eating is important?",
     }
 )
-print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+print("\nEnd Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
 print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 message = condense_q_chain.invoke(
@@ -96,7 +97,7 @@ message = condense_q_chain.invoke(
         "question": "What does LLM mean?",
     }
 )
-print("End Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+print("\nEnd Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
 qa_system_prompt = """You are an assistant for question-answering tasks. \
 Use the following pieces of retrieved context to answer the question. \
