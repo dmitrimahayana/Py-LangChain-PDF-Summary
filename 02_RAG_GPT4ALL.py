@@ -46,21 +46,21 @@ local_path = (
 llm = GPT4All(model=local_path, callbacks=callbacks, verbose=True)
 
 # Adding Memory
-condense_q_system_prompt = """Given a chat history and the latest user question \
+condense_system_prompt = """Given a chat history and the latest user question \
 which might reference the chat history, formulate a standalone question \
 which can be understood without the chat history. Do NOT answer the question, \
 just reformulate it if needed and otherwise return it as is."""
-condense_q_prompt = ChatPromptTemplate.from_messages(
+condense_prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", condense_q_system_prompt),
+        ("system", condense_system_prompt),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{question}"),
     ]
 )
-condense_q_chain = condense_q_prompt | llm | StrOutputParser()
+condense_chain = condense_prompt | llm | StrOutputParser()
 
 print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-message = condense_q_chain.invoke(
+message = condense_chain.invoke(
     {
         "chat_history": [
             HumanMessage(content="What does LLM stand for?"),
@@ -87,7 +87,7 @@ qa_prompt = ChatPromptTemplate.from_messages(
 
 def condense_question(input: dict):
     if input.get("chat_history"):
-        return condense_q_chain
+        return condense_chain
     else:
         return input["question"]
 
