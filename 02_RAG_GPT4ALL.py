@@ -45,11 +45,6 @@ local_path = (
 )
 llm = GPT4All(model=local_path, callbacks=callbacks, verbose=True)
 
-
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
-
-
 # Adding Memory
 condense_q_system_prompt = """Given a chat history and the latest user question \
 which might reference the chat history, formulate a standalone question \
@@ -63,18 +58,6 @@ condense_q_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 condense_q_chain = condense_q_prompt | llm | StrOutputParser()
-
-print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
-message = condense_q_chain.invoke(
-    {
-        "chat_history": [
-            HumanMessage(content="Why do we need to eat?"),
-            AIMessage(content="to keep survive and life"),
-        ],
-        "question": "Why eating is important?",
-    }
-)
-print("\nEnd Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 
 print("\nStart Condense Chaining =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 message = condense_q_chain.invoke(
@@ -109,6 +92,11 @@ def condense_question(input: dict):
         return input["question"]
 
 
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+
+# Chaining
 rag_chain = (
         RunnablePassthrough.assign(context=condense_question | retriever | format_docs)
         | qa_prompt
